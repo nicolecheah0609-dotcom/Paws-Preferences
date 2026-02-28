@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Paws & Preferences 🐾</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <style>
+        /* Remove default margins/padding and use border-box for easier sizing */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        /*define color palette and common styles as CSS variables for reuse */
+        :root {
+            --clr-bg:        #fdf4ff;
+            --clr-surface:   #ffffff;
+            --clr-glass:     rgba(255,255,255,0.55);
+            --clr-border:    rgba(180,120,255,0.22);
+            --clr-text:      #1e1033;
+            --clr-muted:     #7c5fa0;
+            --clr-like:      #16a34a;
+            --clr-dislike:      #e11d48;
+            --grad-brand:    linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+            --shadow-card:   0 32px 64px rgba(120,60,200,0.18);
+            --radius-card:   28px;
+        }
+
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(145deg, #fce7ff 0%, #ede9fe 30%, #fdf2fb 55%, #fef3c7 80%, #dcfce7 100%);
+            color: var(--clr-text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100dvh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ── COLOURFUL ANIMATED BACKGROUND ── */
+        body::before, body::after {
+            content: ''; position: fixed; border-radius: 50%;
+            filter: blur(90px); z-index: 0; pointer-events: none;
+        }
+        body::before {
+            width: 520px; height: 520px;
+            background: radial-gradient(circle, rgba(168,85,247,0.38) 0%, rgba(236,72,153,0.22) 50%, transparent 75%);
+            top: -160px; left: -160px;
+            animation: blob1 8s ease-in-out infinite alternate;
+        }
+        body::after {
+            width: 480px; height: 480px;
+            background: radial-gradient(circle, rgba(251,146,60,0.35) 0%, rgba(234,179,8,0.25) 50%, transparent 75%);
+            bottom: -140px; right: -140px;
+            animation: blob2 10s ease-in-out infinite alternate;
+        }
+        html::before, html::after {
+            content: ''; position: fixed; border-radius: 50%;
+            filter: blur(100px); z-index: 0; pointer-events: none;
+        }
+        html::before {
+            width: 380px; height: 380px;
+            background: radial-gradient(circle, rgba(34,211,238,0.28) 0%, rgba(99,102,241,0.22) 60%, transparent 80%);
+            top: 40%; left: -120px;
+            animation: blob3 12s ease-in-out infinite alternate;
+        }
+        html::after {
+            width: 340px; height: 340px;
+            background: radial-gradient(circle, rgba(74,222,128,0.32) 0%, rgba(59,130,246,0.2) 60%, transparent 80%);
+            top: 10%; right: -100px;
+            animation: blob4 9s ease-in-out infinite alternate;
+        }
+        @keyframes blob1 { from { transform: translate(0,0) scale(1); } to { transform: translate(60px,80px) scale(1.2); } }
+        @keyframes blob2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-70px,-60px) scale(1.15); } }
+        @keyframes blob3 { from { transform: translate(0,0) scale(1); } to { transform: translate(80px,-50px) scale(1.1); } }
+        @keyframes blob4 { from { transform: translate(0,0) scale(1); } to { transform: translate(-50px,70px) scale(1.25); } }
+
+        /* ── LOADING ── */
+        #loading-screen {
+            position: fixed; inset: 0;
+            background: linear-gradient(145deg, #fce7ff 0%, #ede9fe 40%, #fdf2fb 70%, #dcfce7 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 200; gap: 20px; transition: opacity 0.5s ease;
+        }
+        #loading-screen.hidden { opacity: 0; pointer-events: none; }
+        .loader-paw { font-size: 3.5rem; animation: pawBounce 0.9s ease-in-out infinite alternate; }
+        .loader-text { font-size: 1.05rem; font-weight: 600; color: var(--clr-muted); letter-spacing: 0.04em; }
+        .loader-dots span {
+            display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+            background: var(--clr-muted); margin: 0 3px;
+            animation: dotPulse 1.2s ease-in-out infinite;
+        }
+        .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dotPulse { 0%,80%,100%{opacity:0.3;transform:scale(0.8)} 40%{opacity:1;transform:scale(1.2)} }
+        @keyframes pawBounce { from{transform:scale(1) rotate(-5deg)} to{transform:scale(1.15) rotate(5deg)} }
+
+        /* ── HEADER ── */
+        header {
+            width: 100%;                  /* full viewport width */
+            padding: 20px 24px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            position: relative;
+
+            /* 3D glass card */
+            background: linear-gradient(
+                135deg,
+                rgba(255,255,255,0.75) 0%,
+                rgba(255,255,255,0.45) 60%,
+                rgba(200,160,255,0.2) 100%
+            );
+            border: 1px solid rgba(255,255,255,0.95);
+            border-bottom-color: rgba(180,120,255,0.2);
+            border-right-color:  rgba(180,120,255,0.2);
+            border-radius: 22px;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+
+            /* layered shadow for 3D depth */
+            box-shadow:
+                0 2px 0 rgba(255,255,255,0.95) inset,
+                0 -1px 0 rgba(160,80,240,0.1) inset,
+                0 8px 24px rgba(160,80,240,0.15),
+                0 2px 6px  rgba(160,80,240,0.1),
+                0 0 0 1px  rgba(255,255,255,0.6);
+
+            /* subtle floating animation */
+            animation: headerFloat 6s ease-in-out infinite;
+            transform-style: preserve-3d;
+        }
+        @keyframes headerFloat {
+            0%, 100% { transform: translateY(0px) rotateX(0deg); }
+            50%       { transform: translateY(-3px) rotateX(1deg); }
+        }
+
+        .logo {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.15;
+            align-items: flex-start;      /* text left-aligned inside block */
+        }
+        .logo-paws {
+            font-size: 1.35rem; font-weight: 900; letter-spacing: -0.5px;
+            background: var(--grad-brand);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .logo-title { font-size: 0.7rem; font-weight: 600; color: var(--clr-muted); letter-spacing: 0.04em; margin-top: 1px; }
+
+        .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+        .counter-pill {
+            font-size: 0.78rem; font-weight: 700; color: var(--clr-muted);
+            background: rgba(255,255,255,0.7); border: 1px solid rgba(160,80,240,0.2);
+            padding: 4px 12px; border-radius: 100px; letter-spacing: 0.03em;
+        }
+        .score-row { display: flex; gap: 10px; font-size: 0.72rem; font-weight: 600; }
+        .score-like { color: var(--clr-like); }
+        .score-dislike { color: var(--clr-dislike); }
+
+        /* ── PROGRESS ── */
+        .progress-wrap {
+            width: calc(100% - 32px);
+            max-width: 560px;
+            position: relative; z-index: 10; margin-bottom: 10px; margin-top: 10px;
+        }
+        .progress-track { height: 5px; background: rgba(120,60,200,0.12); border-radius: 100px; overflow: hidden; }
+        .progress-fill {
+            height: 100%; background: var(--grad-brand); border-radius: 100px;
+            width: 0%; transition: width 0.45s cubic-bezier(0.34,1.56,0.64,1);
+            box-shadow: 0 0 12px rgba(192,132,252,0.5);
+        }
+
+        /* ── ARENA ── */
+        .arena {
+            flex: 1; width: 100%; max-width: 480px;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; z-index: 5; padding: 0 24px;
+        }
+        .card-stack { position: relative; width: 100%; max-width: 340px; aspect-ratio: 3/4; }
+
+        /* ── CARD ── */
+        .card {
+            position: absolute; inset: 0; border-radius: var(--radius-card);
+            overflow: hidden; box-shadow: var(--shadow-card);
+            cursor: grab; touch-action: none;
+            user-select: none; -webkit-user-select: none;
+            will-change: transform; border: 1px solid var(--clr-border);
+            background: var(--clr-surface);
+        }
+        .card:active { cursor: grabbing; }
+        .card-inner { position: relative; width: 100%; height: 100%; }
+        .card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; display: block; }
+        .card-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 55%;
+            background: linear-gradient(to top, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.25) 60%, transparent 100%);
+            pointer-events: none;
+        }
+        .card-label { display: none; }
+
+        .stamp {
+            position: absolute; top: 32px; padding: 8px 18px; border: 3px solid;
+            border-radius: 10px; font-weight: 900; font-size: 1.5rem;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            opacity: 0; pointer-events: none; z-index: 5;
+        }
+        .stamp-like { left: 24px; color: var(--clr-like); border-color: var(--clr-like); transform: rotate(-15deg); text-shadow: 0 0 20px rgba(34,197,94,0.5); }
+        .stamp-dislike { right: 24px; color: var(--clr-dislike); border-color: var(--clr-dislike); transform: rotate(15deg); text-shadow: 0 0 20px rgba(244,63,94,0.5); }
+
+        .card-tint { position: absolute; inset: 0; border-radius: var(--radius-card); opacity: 0; pointer-events: none; z-index: 2; }
+        .tint-like { background: rgba(34,197,94,0.18); }
+        .tint-dislike { background: rgba(244,63,94,0.18); }
+
+        .card-ghost { position: absolute; inset: 0; border-radius: var(--radius-card); border: 1px solid rgba(160,80,240,0.18); pointer-events: none; }
+        .card-ghost-2 { background: rgba(200,150,255,0.1); transform: scale(0.94) translateY(14px); z-index: 1; }
+        .card-ghost-1 { background: rgba(200,150,255,0.06); transform: scale(0.88) translateY(26px); z-index: 0; }
+
+        /* ── HINT ── */
+        .swipe-hint { display: flex; align-items: center; gap: 18px; z-index: 10; position: relative; margin-bottom: 6px; }
+        .hint-item  { display: flex; align-items: center; gap: 5px; font-size: 1rem; font-weight: 600; color: var(--clr-muted); }
+        .hint-dot   { width: 5px; height: 5px; border-radius: 50%; background: rgba(120,60,200,0.2); }
+
+        /* ── ACTIONS ── */
+        .actions {
+            display: flex; gap: 16px; padding: 16px 24px 28px;
+            align-items: center; justify-content: center;
+            z-index: 10; position: relative;
+        }
+        .btn {
+            border: none; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
+            user-select: none; position: relative; overflow: hidden;
+            transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease, opacity 0.2s;
+        }
+        .btn::after { content:''; position:absolute; inset:0; background:rgba(255,255,255,0.12); opacity:0; border-radius:inherit; transition:opacity 0.15s; }
+        .btn:active::after { opacity: 1; }
+        .btn:active { transform: scale(0.88) !important; }
+
+        .btn-dislike {
+            width: 64px; height: 64px; border-radius: 20px;
+            background: rgba(244,63,94,0.12); border: 1.5px solid rgba(244,63,94,0.25);
+            color: var(--clr-dislike); font-size: 1.5rem;
+            box-shadow: 0 8px 24px rgba(244,63,94,0.1);
+        }
+        .btn-dislike:hover { transform: scale(1.08); box-shadow: 0 8px 24px rgba(244,63,94,0.25); }
+        .btn-like {
+            width: 76px; height: 76px; border-radius: 24px;
+            background: var(--grad-brand); color: #fff; font-size: 1.7rem;
+            box-shadow: 0 12px 32px rgba(129,140,248,0.35);
+        }
+        .btn-like:hover { transform: scale(1.1); box-shadow: 0 16px 40px rgba(129,140,248,0.5); }
+        .btn-undo {
+            width: 52px; height: 52px; border-radius: 16px;
+            background: rgba(255,255,255,0.6); border: 1.5px solid rgba(160,80,240,0.25);
+            color: var(--clr-muted); font-size: 1.1rem;
+        }
+        .btn-undo:hover  { transform: scale(1.08); border-color: rgba(160,80,240,0.5); color: var(--clr-text); }
+        .btn-undo:disabled { opacity: 0.35; cursor: not-allowed; }
+        .btn-undo:disabled:hover { transform: none; }
+
+        /* ── SUMMARY ── */
+        #summary {
+            display: none; position: fixed; inset: 0;
+            background: linear-gradient(145deg, #fce7ff 0%, #ede9fe 35%, #fdf9ff 65%, #fef3c7 100%);
+            z-index: 100;
+            overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+            flex-direction: column; align-items: center;
+        }
+        #summary.visible { display: flex; animation: summarySlideUp 0.55s cubic-bezier(0.16,1,0.3,1); }
+        @keyframes summarySlideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+
+        .summary-hero {
+            width: 100%; padding: 60px 24px 36px;
+            background: linear-gradient(160deg, rgba(168,85,247,0.12) 0%, rgba(236,72,153,0.08) 100%);
+            border-bottom: 1px solid rgba(160,80,240,0.15);
+            display: flex; flex-direction: column; align-items: center;
+            text-align: center; gap: 12px;
+        }
+        .summary-emoji { font-size: 3.5rem; animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+        @keyframes pop { from{transform:scale(0.3);opacity:0} to{transform:scale(1);opacity:1} }
+        .summary-title {
+            font-family: 'Playfair Display', serif; font-style: italic;
+            font-size: 2.2rem; font-weight: 700; line-height: 1.2;
+            background: var(--grad-brand); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .summary-sub { font-size: 0.9rem; color: var(--clr-muted); font-weight: 500; }
+        .summary-stats { display: flex; gap: 16px; margin-top: 8px; }
+        .stat-card {
+            flex: 1; background: rgba(255,255,255,0.7); border: 1px solid rgba(160,80,240,0.18);
+            border-radius: 16px; padding: 14px 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 90px;
+        }
+        .stat-num   { font-size: 1.8rem; font-weight: 900; line-height: 1; }
+        .stat-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--clr-muted); }
+        .stat-liked .stat-num { color: var(--clr-like); }
+        .stat-disliked .stat-num { color: var(--clr-dislike); }
+        .stat-total .stat-num { color: var(--clr-text); }
+
+        .liked-section { width: 100%; max-width: 480px; padding: 28px 20px 16px; }
+        .section-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--clr-muted); margin-bottom: 16px; }
+        .liked-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+        /* ── ROUND HISTORY ── */
+        .round-block { width: 100%; max-width: 480px; padding: 0 20px 24px; }
+        .round-heading {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--clr-muted); margin-bottom: 14px;
+        }
+        .round-heading-line {
+            flex: 1; height: 1px;
+            background: linear-gradient(to right, rgba(160,80,240,0.2), transparent);
+        }
+        .round-pill {
+            background: var(--grad-brand); color: #fff;
+            font-size: 0.65rem; font-weight: 800; letter-spacing: 0.08em;
+            padding: 3px 10px; border-radius: 100px;
+        }
+        .liked-thumb { aspect-ratio: 1; border-radius: 16px; overflow: hidden; border: 1px solid rgba(160,80,240,0.18); position: relative; }
+        .liked-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s ease; }
+        .liked-thumb:hover img { transform: scale(1.06); }
+        .liked-thumb-heart { position: absolute; bottom: 6px; right: 8px; font-size: 0.9rem; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6)); }
+        .no-likes-msg { text-align: center; padding: 24px; color: var(--clr-muted); font-size: 0.9rem; }
+
+        .summary-footer { width: 100%; max-width: 480px; padding: 12px 20px 48px; }
+        .restart-btn {
+            width: 100%; padding: 17px; border-radius: 16px; border: none;
+            background: var(--grad-brand); color: #fff;
+            font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1rem;
+            letter-spacing: 0.02em; cursor: pointer;
+            box-shadow: 0 10px 30px rgba(129,140,248,0.3);
+            transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
+        }
+        .restart-btn:hover  { transform: scale(1.02); box-shadow: 0 14px 36px rgba(129,140,248,0.45); }
+        .restart-btn:active { transform: scale(0.97); }
+
+        /* ── TOAST ── */
+        #toast {
+            position: fixed; bottom: 120px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(255,255,255,0.92); border: 1px solid rgba(160,80,240,0.25);
+            backdrop-filter: blur(16px); color: var(--clr-text);
+            padding: 10px 20px; border-radius: 100px;
+            font-size: 0.83rem; font-weight: 600; white-space: nowrap;
+            z-index: 300; opacity: 0; pointer-events: none;
+            box-shadow: 0 4px 20px rgba(160,80,240,0.15);
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        @media (max-height: 680px) {
+            .card-stack { max-width: 260px; }
+            .btn-like { width: 64px; height: 64px; font-size: 1.4rem; }
+            .btn-dislike { width: 56px; height: 56px; font-size: 1.2rem; }
+            .btn-undo { width: 46px; height: 46px; }
+            .actions  { padding: 10px 24px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="loading-screen">
+    <div class="loader-paw">🐾</div>
+    <div class="loader-text">Gathering cute cats…</div>
+    <div class="loader-dots"><span></span><span></span><span></span></div>
+</div>
+
+<header>
+    <div class="logo">
+        <span class="logo-paws">Paws &amp; Preferences</span>
+        <span class="logo-title">Find Your Kitty 🐱</span>
+    </div>
+    <div class="header-right">
+        <div class="counter-pill" id="counter">1 / 15</div>
+        <div class="score-row">
+            <span class="score-like" id="score-like">❤️ 0</span>
+            <span class="score-dislike" id="score-dislike">💔 0</span>
+        </div>
+    </div>
+</header>
+
+<div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+</div>
+
+<div class="arena">
+    <div class="card-stack" id="card-stack">
+        <div class="card-ghost card-ghost-1"></div>
+        <div class="card-ghost card-ghost-2"></div>
+    </div>
+</div>
+
+<div class="swipe-hint">
+    <div class="hint-item"><span>👈</span> Dislike</div>
+    <div class="hint-dot"></div>
+    <div class="hint-item">Like <span>👉</span></div>
+</div>
+
+<div class="actions">
+    <button class="btn btn-undo" id="btn-undo" onclick="undo()" disabled title="Undo">↩</button>
+    <button class="btn btn-dislike" onclick="handleSwipe('left')" title="Dislike">✕</button>
+    <button class="btn btn-like" onclick="handleSwipe('right')" title="Like">♥</button>
+</div>
+
+<div id="summary">
+    <div class="summary-hero">
+        <div class="summary-emoji" id="summary-emoji">🎉</div>
+        <div class="summary-title" id="summary-title">Session Complete!</div>
+        <div class="summary-sub" id="summary-sub">Here's what your heart said…</div>
+        <div class="summary-stats">
+            <div class="stat-card stat-liked"><div class="stat-num" id="stat-liked">0</div><div class="stat-label">Liked</div></div>
+            <div class="stat-card stat-disliked"><div class="stat-num" id="stat-disliked">0</div><div class="stat-label">Disliked</div></div>
+            <div class="stat-card stat-total"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
+        </div>
+    </div>
+    <div class="liked-section">
+        <div class="section-label" id="liked-label">Your Favourite Kitties</div>
+        <div class="liked-grid" id="liked-grid"></div>
+        <div class="no-likes-msg" id="no-likes-msg" style="display:none">No cats liked this round. Tough crowd! 😸</div>
+    </div>
+    <!-- All previous rounds accumulated here -->
+    <div id="history-container"></div>
+    <div class="summary-footer">
+        <button class="restart-btn" onclick="restart()">🔄 Meet More Cats</button>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+    const TOTAL           = 15;
+    const SWIPE_THRESHOLD = 110;
+
+    // Persists liked cats across all rounds for the session
+    let allRounds  = [];  // [{ timestamp: Date, liked: [{url},...] }, ...]
+    const imageCache = new Set(); // tracks URLs already loaded into browser cache
+
+    function formatDateTime(date) {
+        return date.toLocaleString([], {
+            day:    '2-digit', month: 'short', year: 'numeric',
+            hour:   '2-digit', minute: '2-digit', hour12: true
+        });
+    }
+
+    let catUrls    = [];
+    let decisions  = [];
+    let currentIdx = 0;
+    let likedCount = 0;
+    let dislikedCount = 0;
+    let dragging   = false;
+    let startX     = 0;
+    let currentDX  = 0;
+    let activeCard = null;
+
+    async function init() {
+        try {
+            // Use a large random skip (0–500) so every refresh fetches a genuinely different batch
+            const skip = Math.floor(Math.random() * 500);
+            // Cataas API doesn't support true random, but we can at least get a different slice each time
+            const res  = await fetch(`https://cataas.com/api/cats?limit=${TOTAL}&skip=${skip}`);
+            const data = await res.json();
+            // API returns { value: [...], Count: N } — each cat has `id` (not `_id`)
+            const cats = Array.isArray(data) ? data : (data.value || []);
+            if (cats.length > 0) {
+                // Shuffle for extra variety using Fisher-Yates
+                for (let i = cats.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [cats[i], cats[j]] = [cats[j], cats[i]];
+                }
+                catUrls = cats.map(c => `https://cataas.com/cat/${c.id || c._id}`);
+            }
+        } catch (_) {}
+        // Fallback: pad with random cat URLs
+        while (catUrls.length < TOTAL) catUrls.push(`https://cataas.com/cat?nocache=${Date.now()}-${catUrls.length}-${Math.random()}`);
+
+        // Preload all images into browser cache before showing first card.
+        // First 3 are preloaded eagerly (blocking hideLoader), the rest load silently in background.
+        await preloadImages(catUrls.slice(0, 3));
+        showCard();
+        hideLoader();
+        // Preload the rest quietly in the background
+        preloadImages(catUrls.slice(3));
+    }
+
+    // Preload an array of image URLs. Returns a promise that resolves when all are loaded (or errored).
+    function preloadImages(urls) {
+        return Promise.all(urls.map(url => new Promise(resolve => {
+            if (imageCache.has(url)) { resolve(); return; }
+            const img = new Image();
+            img.onload  = () => { imageCache.add(url); resolve(); };
+            img.onerror = () => resolve(); // don't block on broken images
+            img.src = url;
+        })));
+    }
+
+    function hideLoader() {
+        const el = document.getElementById('loading-screen');
+        el.classList.add('hidden');
+        setTimeout(() => el.style.display = 'none', 500);
+    }
+
+    function showCard() {
+        const stack = document.getElementById('card-stack');
+        const old = stack.querySelector('.card');
+        if (old) old.remove();
+        //if all cards have been swiped, show summary instead of trying to load more
+        if (currentIdx >= TOTAL) { showSummary(); return; }
+        // Create new card element for the current cat
+        const url = catUrls[currentIdx];
+       
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.zIndex = 10;
+        // Inner HTML structure of the card, including image and overlays
+        card.innerHTML = `
+            <div class="card-inner">
+                <img src="${url}" alt="Cat" loading="eager" decoding="async" />
+                <div class="tint-like card-tint"></div>
+                <div class="tint-dislike card-tint"></div>
+                <div class="card-overlay"></div>
+                <div class="stamp stamp-like">LIKE 🐾</div>
+                <div class="stamp stamp-dislike">DISLIKE 💔</div>
+            </div>`;
+
+        // Start hidden; reveal only once the image is ready to avoid blank-card flash
+        card.style.opacity = '0';
+        stack.appendChild(card);
+
+        const img = card.querySelector('img');
+        const reveal = () => {
+            card.style.transform  = 'scale(0.92) translateY(20px)';
+            card.style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease';
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                card.style.transform = '';
+                card.style.opacity   = '1';
+            }));
+            setTimeout(() => { if (card) card.style.transition = ''; }, 450);
+        };
+
+        if (img.complete && img.naturalWidth > 0) {
+            // Already in cache — reveal immediately
+            reveal();
+        } else {
+            img.onload  = reveal;
+            img.onerror = reveal; // show even if broken
+        }
+
+        // Silently preload the next image while user is on current card
+        if (currentIdx + 1 < TOTAL) preloadImages([catUrls[currentIdx + 1]]);
+
+        activeCard = card;
+        card.addEventListener('mousedown',  onDragStart, { passive: false });
+        card.addEventListener('touchstart', onDragStart, { passive: false });
+        updateUI();
+    }
+    // Handles the start of a drag/touch gesture on the card
+    function onDragStart(e) {
+        if (!activeCard) return;
+        dragging  = true;
+        // For touch events, use the first touch point; for mouse, use the event's clientX
+        startX    = e.touches ? e.touches[0].clientX : e.clientX;
+        currentDX = 0;
+        activeCard.style.transition = 'none';
+        e.preventDefault();
+    }
+    // Handles the movement during a drag/touch gesture, updating card position and showing stamps
+    function onDragMove(e) {
+        if (!dragging || !activeCard) return;
+        // Calculate horizontal drag distance from the starting point
+        currentDX = (e.touches ? e.touches[0].clientX : e.clientX) - startX;
+        // Move the card horizontally with a slight rotation based on drag distance
+        activeCard.style.transform = `translateX(${currentDX}px) rotate(${currentDX * 0.08}deg)`;
+        // Calculate swipe strength as a value from 0 to 1 based on how far the card is dragged relative to the threshold
+        const t = Math.min(Math.abs(currentDX) / SWIPE_THRESHOLD, 1);
+        const ls = activeCard.querySelector('.stamp-like'), ns = activeCard.querySelector('.stamp-dislike');
+        const lt = activeCard.querySelector('.tint-like'),  nt = activeCard.querySelector('.tint-dislike');
+        // If dragging right, show like stamp and tint; if dragging left, show dislike stamp and tint
+        if (currentDX > 0) { ls.style.opacity = t; ns.style.opacity = 0; lt.style.opacity = t * 0.5; nt.style.opacity = 0; }
+        else               { ns.style.opacity = t; ls.style.opacity = 0; nt.style.opacity = t * 0.5; lt.style.opacity = 0; }
+    }
+    // Handles the end of a drag/touch gesture, determining if the card should fly off or snap back
+    function onDragEnd() {
+        if (!dragging) return;
+        dragging = false;
+        if (!activeCard) return;
+        if      (currentDX >  SWIPE_THRESHOLD) flyCard('right');
+        else if (currentDX < -SWIPE_THRESHOLD) flyCard('left');
+        else {
+            activeCard.style.transition = 'transform 0.45s cubic-bezier(0.34,1.56,0.64,1)';
+            activeCard.style.transform  = '';
+            activeCard.querySelectorAll('.stamp, .card-tint').forEach(el => el.style.opacity = 0);
+            setTimeout(() => { if (activeCard) activeCard.style.transition = ''; }, 450);
+        }
+        currentDX = 0;
+    }
+    window.addEventListener('mousemove', onDragMove, { passive: true });
+    window.addEventListener('touchmove', onDragMove, { passive: true });
+    window.addEventListener('mouseup',   onDragEnd);
+    window.addEventListener('touchend',  onDragEnd);
+
+    function handleSwipe(dir) { if (!activeCard || dragging) return; flyCard(dir); }
+   // Handles the card flying off-screen in the given direction and updates state accordingly
+    function flyCard(dir) {
+        if (!activeCard) return;
+        const card = activeCard; activeCard = null;
+        const liked = (dir === 'right');
+        // Store both the decision AND the exact URL at this index so undo/summary are always in sync
+        decisions[currentIdx] = { verdict: liked ? 'like' : 'dislike', url: catUrls[currentIdx] };
+        if (liked) likedCount++; else dislikedCount++;
+        card.style.transition = 'transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease';
+        card.style.transform  = liked ? 'translateX(130vw) rotate(35deg)' : 'translateX(-130vw) rotate(-35deg)';
+        card.style.opacity    = '0';
+        showToast(liked ? '❤️ Like!' : '💔 Dislike!');
+        currentIdx++;
+        updateUI();
+        document.getElementById('btn-undo').disabled = false;
+        setTimeout(() => { card.remove(); showCard(); }, 380);
+    }
+
+    function undo() {
+        if (currentIdx <= 0) return;
+        currentIdx--;
+        const last = decisions[currentIdx];
+        if (last) {
+            if (last.verdict === 'like') likedCount--;
+            else if (last.verdict === 'dislike') dislikedCount--;
+        }
+        decisions[currentIdx] = undefined;
+        if (currentIdx === 0) document.getElementById('btn-undo').disabled = true;
+        if (activeCard) { activeCard.remove(); activeCard = null; }
+        updateUI(); showCard(); showToast('↩ Undone!');
+    }
+   // Updates the counter, progress bar, and score display based on current state
+    function updateUI() {
+        document.getElementById('counter').textContent = currentIdx >= TOTAL ? 'Done!' : `${currentIdx + 1} / ${TOTAL}`;
+        document.getElementById('progress-fill').style.width = `${(currentIdx / TOTAL) * 100}%`;
+        document.getElementById('score-like').textContent = `❤️ ${likedCount}`;
+        document.getElementById('score-dislike').textContent = `💔 ${dislikedCount}`;
+    }
+   // Shows a temporary toast message at the bottom of the screen
+    function showToast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg; el.classList.add('show');
+        clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 1400);
+    }
+
+    function showSummary() {
+        // Calculate percentage of liked cats
+        const pct = Math.round((likedCount / TOTAL) * 100);
+        const [emoji, title] = pct >= 80 ? ['😻','Total Cat Lover!'] : pct >= 50 ? ['🥰','Cat Enthusiast!'] : pct >= 20 ? ['😸','Selective Tastes!'] : ['😼','Hard to Impress!'];
+        document.getElementById('summary-emoji').textContent = emoji;
+        document.getElementById('summary-title').textContent = title;
+        document.getElementById('summary-sub').textContent   = `You swiped through ${TOTAL} adorable cats.`;
+        document.getElementById('stat-liked').textContent    = likedCount;
+        document.getElementById('stat-disliked').textContent    = dislikedCount;
+        document.getElementById('stat-total').textContent    = TOTAL;
+
+        // ── Current round liked cats ──
+        const grid = document.getElementById('liked-grid');
+        grid.innerHTML = '';
+        const likedItems = decisions.filter(d => d && d.verdict === 'like');
+
+        if (likedItems.length === 0) {
+            document.getElementById('no-likes-msg').style.display = 'block';
+            document.getElementById('liked-label').style.display  = 'none';
+        } else {
+            document.getElementById('no-likes-msg').style.display = 'none';
+            document.getElementById('liked-label').style.display  = '';
+            document.getElementById('liked-label').textContent    = `${formatDateTime(new Date())} — Favourite Kitties (${likedItems.length})`;
+            // show thumbnails of liked cats for the current round
+            likedItems.forEach(item => {
+                const t = document.createElement('div');
+                t.className = 'liked-thumb';
+                t.innerHTML = `<img src="${item.url}" alt="Liked cat" loading="lazy" /><span class="liked-thumb-heart">❤️</span>`;
+                grid.appendChild(t);
+            });
+        }
+
+        // ── Previous rounds history ──
+        const historyEl = document.getElementById('history-container');
+        historyEl.innerHTML = '';
+        if (allRounds.length > 0) {
+            allRounds.slice().reverse().forEach(round => {
+                const block = document.createElement('div');
+                block.className = 'round-block';
+                // For each past round, show the timestamp and either the liked cats or a "no likes" message
+                if (round.liked.length === 0) {
+                    block.innerHTML = `
+                        <div class="round-heading">
+                            <span class="round-pill">📅 ${formatDateTime(round.timestamp)}</span>
+                            <div class="round-heading-line"></div>
+                        </div>
+                        <div class="no-likes-msg" style="display:block;padding:0 0 8px">No cats liked that round 😸</div>`;
+                } else {
+                    // Show thumbnails of liked cats for the current round
+                    const thumbs = round.liked.map(item => `
+                        <div class="liked-thumb">
+                            <img src="${item.url}" alt="Liked cat" loading="lazy" />
+                            <span class="liked-thumb-heart">❤️</span>
+                        </div>`).join('');
+                    block.innerHTML = `
+                        <div class="round-heading">
+                            <span class="round-pill">📅 ${formatDateTime(round.timestamp)}</span>
+                            <span style="color:var(--clr-muted);font-size:0.7rem">${round.liked.length} liked</span>
+                            <div class="round-heading-line"></div>
+                        </div>
+                        <div class="liked-grid">${thumbs}</div>`;
+                }
+                historyEl.appendChild(block);
+            });
+        }
+
+        document.getElementById('summary').classList.add('visible');
+        document.getElementById('summary').style.display = ''; // clear inline override so CSS class takes effect
+    }
+
+    function restart() {
+        // Save current round's liked cats into history before resetting
+        const likedItems = decisions.filter(d => d && d.verdict === 'like');
+        allRounds.push({ timestamp: new Date(), liked: likedItems });
+
+        const s = document.getElementById('summary');
+        s.classList.remove('visible'); s.style.display = 'none';
+        // Clear current state for new round
+        currentIdx = likedCount = dislikedCount = 0;
+        decisions = []; activeCard = null; catUrls = []; imageCache.clear();
+        document.getElementById('btn-undo').disabled = true;
+        const loader = document.getElementById('loading-screen');
+        loader.style.cssText = ''; loader.classList.remove('hidden');
+        updateUI(); init();
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight' || e.key === 'l') handleSwipe('right');
+        if (e.key === 'ArrowLeft'  || e.key === 'j') handleSwipe('left');
+        if (e.key === 'z' && (e.ctrlKey || e.metaKey)) undo();
+    });
+    
+    init();
+</script>
+</body>
+</html>
